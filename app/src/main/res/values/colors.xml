@@ -11,4 +11,5 @@
     <color name="dark_purple">#913175</color>
     <color name="light_purple">#CD5888</color>
     <color name="gray">#E9E8E8</color>
+    <color name="placeholder">#6FB6B6B6</color>
 </resources>

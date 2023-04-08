@@ -1,61 +1,65 @@
 package com.rizkman.githubusersearch.adapter
 
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ListAdapter
 import android.widget.TextView
+import androidx.appcompat.view.menu.MenuView.ItemView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.AsyncListDiffer
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.rizkman.githubusersearch.R
+import com.rizkman.githubusersearch.data.local.entity.UserEntity
+import com.rizkman.githubusersearch.databinding.ItemRowUserBinding
 import com.rizkman.githubusersearch.response.ItemsItem
 import de.hdodenhof.circleimageview.CircleImageView
 
-class UserAdapter(private val userList: List<ItemsItem>) : RecyclerView.Adapter<UserAdapter.ViewHolder>() {
+class UserAdapter: RecyclerView.Adapter<UserAdapter.MyViewHolder>(){
+    inner class MyViewHolder(private val binding: ItemRowUserBinding): RecyclerView.ViewHolder(binding.root){
+        fun bind(user: UserEntity){
+            binding.tvItemUsername.text = user.login
+            Glide.with(itemView)
+                .load(user.avatarUrl)
+                .apply(RequestOptions.placeholderOf(R.drawable.ic_loading).error(R.drawable.ic_error))
+                .into(binding.civProfile)
 
-    private lateinit var onItemClickCallback: OnItemClickCallBack
-
-    fun setOnItemCallback (onItemClickCallBack: OnItemClickCallBack){
-        this.onItemClickCallback = onItemClickCallBack
+            itemView.setOnClickListener { onItemClickListener?.let{it(user)} }
+        }
+    }
+    private var onItemClickListener: ((UserEntity) -> Unit)? = null
+    fun setOnItemClickListener(listener: (UserEntity) -> Unit){
+        onItemClickListener = listener
     }
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val rvLayout : CardView = view.findViewById(R.id.card_view)
-        val tvItemUsername : TextView = view.findViewById(R.id.tv_item_username)
-        val ivUserProfile : CircleImageView = view.findViewById(R.id.civ_profile)
-    }
-
-    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int) =
-        ViewHolder(LayoutInflater.from(viewGroup.context).inflate(R.layout.item_row_user,viewGroup,false))
-
-
-    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        val user = userList[position].login
-        val pictureUrl = userList[position].avatarUrl
-
-        if (position % 2 == 0 ){
-            viewHolder.rvLayout.setCardBackgroundColor(ContextCompat.getColor(
-                viewHolder.itemView.context, R.color.dark_purple
-            ))
-        }else{
-            viewHolder.rvLayout.setCardBackgroundColor(ContextCompat.getColor(
-                viewHolder.itemView.context, R.color.light_purple
-           ))
+    private val diffCallback = object : DiffUtil.ItemCallback<UserEntity>(){
+        override fun areItemsTheSame(oldItem: UserEntity, newItem: UserEntity): Boolean {
+            return oldItem.login == newItem.login
         }
 
-        viewHolder.tvItemUsername.text = user
-        Glide.with(viewHolder.itemView.context)
-            .load(pictureUrl)
-            .into(viewHolder.ivUserProfile)
+        override fun areContentsTheSame(oldItem: UserEntity, newItem: UserEntity): Boolean {
+            return oldItem == newItem
+        }
+    }
+    val differ = AsyncListDiffer(this,diffCallback)
 
-        viewHolder.itemView.setOnClickListener {
-            onItemClickCallback.onItemClicked(userList[viewHolder.adapterPosition]) }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
+        val view = ItemRowUserBinding.inflate(LayoutInflater.from(parent.context),parent,false)
+        return MyViewHolder(view)
     }
 
-    override fun getItemCount(): Int = userList.size
+    override fun getItemCount() = differ.currentList.size
 
-    interface OnItemClickCallBack{
-        fun onItemClicked (data: ItemsItem)
+    override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
+        holder.bind(differ.currentList[position])
     }
+
+
 }

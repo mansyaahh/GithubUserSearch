@@ -1,6 +1,7 @@
 package com.rizkman.githubusersearch.response
 
 import com.google.gson.annotations.SerializedName
+import com.rizkman.githubusersearch.data.local.entity.UserEntity
 
 data class SearchResponse(
 
@@ -11,7 +12,7 @@ data class SearchResponse(
 	val incompleteResults: Boolean,
 
 	@field:SerializedName("items")
-	val items: List<ItemsItem>
+	val items: List<UserEntity>
 )
 
 data class ItemsItem(
